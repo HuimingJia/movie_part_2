@@ -8,8 +8,8 @@ class MovieData
       @filepath = str + "/u.data"
       @testpath = nil
     else
-      @filepath = "./" + str + "/#{filename.to_s}.base"
-      @testpath = "./" + str + "/#{filename.to_s}.test"
+      @filepath = "./" + str + "/#{filename}.base"
+      @testpath = "./" + str + "/#{filename}.test"
     end
   end
 
@@ -17,19 +17,15 @@ class MovieData
     content = open(@filepath)
     content.each do |line|
       user_id, movie_id, rating = line.split("\t")
-      if @users.has_key?(user_id)
-        @users[user_id][movie_id] = rating
-      else
+      if @users.has_key?(user_id) == false
         @users[user_id] = Hash.new
-        @users[user_id][movie_id] = rating
       end
+      @users[user_id][movie_id] = rating
 
-      if @movies.has_key?(movie_id)
-        @movies[movie_id][user_id] = rating
-      else
+      if @movies.has_key?(movie_id) == false
         @movies[movie_id] = Hash.new
-        @movies[movie_id][user_id] = rating
       end
+      @movies[movie_id][user_id] = rating
     end
   end
 
@@ -57,12 +53,11 @@ class MovieData
   def similarity(user1,user2)
     rating1 = @users[user1]
     rating2 = @users[user2]
-    vector1, vector2 = Array.new
     inner_product = 0
     (1..1682).each do |index|
       if(rating1.has_key?(index.to_s) && rating2.has_key?(index.to_s))
-         inner_product += rating1[index.to_s].to_i * rating2[index.to_s].to_i
-       end
+        inner_product += rating1[index.to_s].to_i * rating2[index.to_s].to_i
+      end
     end
 
     norm1 = norm2 = 0
@@ -98,11 +93,9 @@ class MovieData
     end
 
     errors =  Array.new
-    predictions = Array.new
-    sum = 0
-    rms = 0
+    predictions =  Array.new
+    sum = rms = count = 0
 
-    count = 0
     tests.each do |line|
       if count == k
         break
@@ -115,7 +108,6 @@ class MovieData
       end
 
       predict_result = predict(user_id, movie_id)
-      puts predict_result,rating
       error = (predict_result.to_i - rating.to_i).abs
       sum = sum + error
       rms = rms + error ** 2
@@ -131,7 +123,6 @@ class MovieData
     errors.each do |error|
       std = std + (error - mean) ** 2
     end
-
     std = (std / errors.length) ** 0.5
     return movie_test = MovieTest.new(mean, std, rms, predictions)
   end
